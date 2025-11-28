@@ -264,14 +264,14 @@
             user-select: all;
         }
 
-        .host-view, .join-view, .waiting-view, .profile-view, .controls-view {
+        .host-view, .join-view, .waiting-view, .profile-view {
             display: none;
             flex-direction: column;
             align-items: center;
             gap: 20px;
         }
 
-        .host-view.active, .join-view.active, .waiting-view.active, .profile-view.active, .controls-view.active {
+        .host-view.active, .join-view.active, .waiting-view.active, .profile-view.active {
             display: flex;
         }
 
@@ -319,6 +319,44 @@
             background: var(--bg-panel);
             border: 1px solid var(--border);
             margin-top: 10px;
+            position: relative;
+        }
+
+        .profile-preview.clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .profile-preview.clickable:hover {
+            border-color: var(--text-dim);
+            background: var(--border);
+        }
+
+        .preview-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .preview-controls {
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .edit-indicator {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 12px;
+            color: var(--text-dim);
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+        }
+
+        .profile-preview.clickable:hover .edit-indicator {
+            opacity: 1;
         }
 
         .preview-snake {
@@ -329,6 +367,24 @@
         .preview-segment {
             width: 16px;
             height: 16px;
+        }
+
+        .animated-snake-container {
+            width: 100%;
+            height: 100px;
+            position: relative;
+            margin: 20px 0;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .animated-snake-canvas {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            display: block;
         }
 
         .preview-name {
@@ -519,8 +575,9 @@
     <div class="connection-panel" id="connectionPanel">
         <!-- Profile Setup View -->
         <div class="profile-view" id="profileView">
-            <div class="panel-title">Create Profile</div>
-            <div class="panel-subtitle">Name your snake and choose a color</div>
+            <button class="back-btn" id="backFromProfile">← Back</button>
+            <div class="panel-title">Edit Profile</div>
+            <div class="panel-subtitle">Customize your snake and controls</div>
             
             <div class="input-group">
                 <div class="input-label">Snake Name</div>
@@ -543,73 +600,71 @@
                 </div>
             </div>
 
+            <div class="input-group">
+                <div class="input-label">Controls</div>
+                <div class="control-options">
+                    <div class="control-option" data-control="arrows">
+                        <div>
+                            <div class="control-label">Arrow Keys</div>
+                            <div class="control-description">Use ↑ ↓ ← → to move</div>
+                        </div>
+                        <div class="control-check"></div>
+                    </div>
+                    
+                    <div class="control-option" data-control="wasd">
+                        <div>
+                            <div class="control-label">WASD</div>
+                            <div class="control-description">Use W A S D to move</div>
+                        </div>
+                        <div class="control-check"></div>
+                    </div>
+                    
+                    <div class="control-option" data-control="mouse">
+                        <div>
+                            <div class="control-label">Mouse</div>
+                            <div class="control-description">Snake follows cursor</div>
+                        </div>
+                        <div class="control-check"></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="profile-preview" id="profilePreview">
                 <div class="preview-snake">
                     <div class="preview-segment" id="previewHead"></div>
                     <div class="preview-segment" id="previewBody1"></div>
                     <div class="preview-segment" id="previewBody2"></div>
                 </div>
-                <div class="preview-name" id="previewName">Snake</div>
-            </div>
-
-            <button class="btn primary" id="saveProfileBtn">Continue</button>
-        </div>
-
-        <!-- Controls Selection View -->
-        <div class="controls-view" id="controlsView">
-            <button class="back-btn" id="backFromControls">← Back</button>
-            <div class="panel-title">Select Controls</div>
-            <div class="panel-subtitle">Choose your preferred control method</div>
-            
-            <div class="control-options">
-                <div class="control-option" data-control="arrows">
-                    <div>
-                        <div class="control-label">Arrow Keys</div>
-                        <div class="control-description">Use ↑ ↓ ← → to move</div>
-                    </div>
-                    <div class="control-check"></div>
-                </div>
-                
-                <div class="control-option" data-control="wasd">
-                    <div>
-                        <div class="control-label">WASD</div>
-                        <div class="control-description">Use W A S D to move</div>
-                    </div>
-                    <div class="control-check"></div>
-                </div>
-                
-                <div class="control-option" data-control="mouse">
-                    <div>
-                        <div class="control-label">Mouse</div>
-                        <div class="control-description">Snake follows cursor</div>
-                    </div>
-                    <div class="control-check"></div>
+                <div class="preview-info">
+                    <div class="preview-name" id="previewName">Snake</div>
+                    <div class="preview-controls" id="previewControls">Arrow Keys</div>
                 </div>
             </div>
 
-            <button class="btn primary" id="saveControlsBtn">Save Controls</button>
+            <button class="btn primary" id="saveProfileBtn">Save Profile</button>
         </div>
+
 
         <!-- Initial View -->
         <div class="initial-view" id="initialView">
-            <button class="edit-profile-btn" id="editProfileBtn">Edit Profile</button>
-            <button class="edit-profile-btn" id="editControlsBtn" style="top: 60px;">Edit Controls</button>
             <div class="panel-title">Snake Duel</div>
             <div class="panel-subtitle">
                 A minimalist 2-player snake game. One player hosts, the other joins. Arrow keys to move.
             </div>
-            <div class="profile-preview" id="currentProfile">
-                <div class="preview-snake">
-                    <div class="preview-segment" id="currentHead"></div>
-                    <div class="preview-segment" id="currentBody1"></div>
-                    <div class="preview-segment" id="currentBody2"></div>
+            <div class="profile-preview clickable" id="currentProfile">
+                <div class="preview-info">
+                    <div class="preview-name" id="currentName">Snake</div>
+                    <div class="preview-controls" id="currentControls">Arrow Keys</div>
                 </div>
-                <div class="preview-name" id="currentName">Snake</div>
+                <div class="edit-indicator">✎</div>
+            </div>
+            <div class="animated-snake-container" id="animatedSnakeContainer">
+                <canvas class="animated-snake-canvas" id="animatedSnakeCanvas"></canvas>
             </div>
             <div class="btn-group">
-                <button class="btn primary" id="hostBtn">Host Game</button>
-                <button class="btn secondary" id="joinBtn">Join Game</button>
-                <button class="btn" id="soloBtn" style="border-color: var(--text-dim);">Play Solo</button>
+                <button class="btn primary" id="hostBtn">Host</button>
+                <button class="btn secondary" id="joinBtn">Join</button>
+                <button class="btn" id="soloBtn" style="border-color: var(--text-dim);">Solo</button>
             </div>
         </div>
 
@@ -771,6 +826,10 @@
             if (gameRunning) {
                 render();
             }
+            // Resize animated snake canvas if initial view is visible
+            if (!initialView.classList.contains('hidden')) {
+                setupAnimatedSnake();
+            }
         });
 
         // ═══════════════════════════════════════════════════════════════
@@ -791,13 +850,23 @@
             joinView.classList.remove('active');
             waitingView.classList.remove('active');
             profileView.classList.remove('active');
-            document.getElementById('controlsView').classList.remove('active');
 
             if (view === 'initial') {
                 initialView.classList.remove('hidden');
                 updateCurrentProfileDisplay();
                 updateControlsHint();
-            } else if (view === 'host') {
+                // Show back button when returning to initial view
+                document.getElementById('backFromProfile').style.display = 'block';
+                // Start animated snake
+                setTimeout(() => {
+                    startAnimatedSnake();
+                }, 100);
+            } else {
+                // Stop animated snake when leaving initial view
+                stopAnimatedSnake();
+            }
+
+            if (view === 'host') {
                 hostView.classList.add('active');
             } else if (view === 'join') {
                 joinView.classList.add('active');
@@ -806,9 +875,10 @@
             } else if (view === 'profile') {
                 profileView.classList.add('active');
                 loadProfileIntoEditor();
-            } else if (view === 'controls') {
-                document.getElementById('controlsView').classList.add('active');
-                loadControlsIntoEditor();
+                // Show back button if profile exists
+                if (hasProfile()) {
+                    document.getElementById('backFromProfile').style.display = 'block';
+                }
             }
         }
 
@@ -856,6 +926,11 @@
                 opt.classList.toggle('selected', opt.dataset.color === myProfile.color);
             });
             
+            // Select current controls
+            document.querySelectorAll('.control-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.control === myProfile.controls);
+            });
+            
             updateProfilePreview();
         }
 
@@ -866,14 +941,21 @@
             document.getElementById('previewBody2').style.background = color;
             document.getElementById('previewName').textContent = myProfile.name || 'Snake';
             document.getElementById('previewName').style.color = color;
+            
+            // Update controls preview
+            const controlsText = myProfile.controls === 'wasd' ? 'WASD' : 
+                                myProfile.controls === 'mouse' ? 'Mouse' : 'Arrow Keys';
+            document.getElementById('previewControls').textContent = controlsText;
         }
 
         function updateCurrentProfileDisplay() {
-            document.getElementById('currentHead').style.background = lightenColor(myProfile.color, 10);
-            document.getElementById('currentBody1').style.background = myProfile.color;
-            document.getElementById('currentBody2').style.background = myProfile.color;
             document.getElementById('currentName').textContent = myProfile.name;
             document.getElementById('currentName').style.color = myProfile.color;
+            
+            // Update controls display
+            const controlsText = myProfile.controls === 'wasd' ? 'WASD' : 
+                                myProfile.controls === 'mouse' ? 'Mouse' : 'Arrow Keys';
+            document.getElementById('currentControls').textContent = controlsText;
         }
 
         function lightenColor(color, percent) {
@@ -889,12 +971,6 @@
             return localStorage.getItem('snakeDuelProfile') !== null;
         }
 
-        function loadControlsIntoEditor() {
-            // Select current control scheme
-            document.querySelectorAll('.control-option').forEach(opt => {
-                opt.classList.toggle('selected', opt.dataset.control === myProfile.controls);
-            });
-        }
 
         function updateControlsHint() {
             const hint = document.getElementById('controlsHint');
@@ -1555,8 +1631,11 @@
             showView('initial');
         });
 
-        document.getElementById('backFromControls').addEventListener('click', () => {
-            showView('initial');
+        document.getElementById('backFromProfile').addEventListener('click', () => {
+            // Only go back if profile exists (not first-time setup)
+            if (hasProfile()) {
+                showView('initial');
+            }
         });
 
         document.getElementById('playAgainBtn').addEventListener('click', () => {
@@ -1574,26 +1653,24 @@
             }
         });
 
-        // Profile handlers
-        document.getElementById('editProfileBtn').addEventListener('click', () => {
+        // Profile handlers - make profile preview clickable
+        document.getElementById('currentProfile').addEventListener('click', () => {
             showView('profile');
-        });
-
-        document.getElementById('editControlsBtn').addEventListener('click', () => {
-            showView('controls');
         });
 
         document.getElementById('saveProfileBtn').addEventListener('click', () => {
             const name = nameInput.value.trim() || 'Snake';
             myProfile.name = name;
-            saveProfile();
             
-            // Show controls selection if not set, otherwise go to main menu
+            // Ensure controls is set
             if (!myProfile.controls) {
-                showView('controls');
-            } else {
-                showView('initial');
+                myProfile.controls = 'arrows'; // Default
             }
+            
+            saveProfile();
+            // Show back button now that profile exists
+            document.getElementById('backFromProfile').style.display = 'block';
+            showView('initial');
         });
 
         // Controls handlers
@@ -1602,16 +1679,8 @@
                 document.querySelectorAll('.control-option').forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
                 myProfile.controls = option.dataset.control;
+                updateProfilePreview();
             });
-        });
-
-        document.getElementById('saveControlsBtn').addEventListener('click', () => {
-            if (!myProfile.controls) {
-                myProfile.controls = 'arrows'; // Default
-            }
-            saveProfile();
-            showView('initial');
-            updateControlsHint();
         });
 
         // Color picker
@@ -1632,6 +1701,172 @@
         });
 
         // ═══════════════════════════════════════════════════════════════
+        // ANIMATED SNAKE PREVIEW
+        // ═══════════════════════════════════════════════════════════════
+        const animatedSnakeCanvas = document.getElementById('animatedSnakeCanvas');
+        const animatedSnakeCtx = animatedSnakeCanvas.getContext('2d');
+        let animatedSnakeAnimationId = null;
+
+        function setupAnimatedSnake() {
+            const container = document.getElementById('animatedSnakeContainer');
+            const btnGroup = document.querySelector('.btn-group');
+            
+            if (!container || !btnGroup) return;
+            
+            // Match container width to button group width
+            const btnGroupRect = btnGroup.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const width = btnGroupRect.width;
+            
+            // Set container and canvas size to match button group width
+            container.style.width = width + 'px';
+            animatedSnakeCanvas.width = width;
+            animatedSnakeCanvas.height = containerRect.height || 100;
+        }
+
+        function startAnimatedSnake() {
+            if (animatedSnakeAnimationId) {
+                cancelAnimationFrame(animatedSnakeAnimationId);
+            }
+            
+            setupAnimatedSnake();
+            
+            const cellSize = 20;
+            const cols = Math.floor(animatedSnakeCanvas.width / cellSize);
+            const rows = Math.floor(animatedSnakeCanvas.height / cellSize);
+            
+            let snake = [
+                { x: 2, y: Math.floor(rows / 2) },
+                { x: 1, y: Math.floor(rows / 2) },
+                { x: 0, y: Math.floor(rows / 2) }
+            ];
+            let direction = { x: 1, y: 0 };
+            let food = { x: Math.floor(cols * 0.7), y: Math.floor(rows / 2) };
+            let frameCount = 0;
+            let foodCollected = false;
+            let foodRespawnTimer = 0;
+            
+            function animate() {
+                animatedSnakeAnimationId = requestAnimationFrame(animate);
+                
+                frameCount++;
+                // Move snake every 15 frames (slower animation)
+                if (frameCount % 15 !== 0) {
+                    renderAnimatedSnake(snake, food, cellSize, cols, rows, foodCollected);
+                    return;
+                }
+                
+                // Move snake
+                const head = {
+                    x: snake[0].x + direction.x,
+                    y: snake[0].y + direction.y
+                };
+                
+                // Wrap around edges
+                if (head.x < 0) head.x = cols - 1;
+                if (head.x >= cols) head.x = 0;
+                if (head.y < 0) head.y = rows - 1;
+                if (head.y >= rows) head.y = 0;
+                
+                snake.unshift(head);
+                
+                // Check food collection
+                if (head.x === food.x && head.y === food.y) {
+                    foodCollected = true;
+                    foodRespawnTimer = 30; // Wait 30 frames before respawning
+                } else {
+                    snake.pop();
+                }
+                
+                // Respawn food after delay
+                if (foodCollected) {
+                    foodRespawnTimer--;
+                    if (foodRespawnTimer <= 0) {
+                        foodCollected = false;
+                        // Place food ahead of snake's path
+                        food = {
+                            x: (head.x + Math.floor(cols * 0.3)) % cols,
+                            y: head.y
+                        };
+                    }
+                }
+                
+                // Change direction periodically to create looping pattern
+                if (frameCount % 120 === 0) {
+                    // Move down
+                    direction = { x: 0, y: 1 };
+                } else if (frameCount % 180 === 0) {
+                    // Move right
+                    direction = { x: 1, y: 0 };
+                } else if (frameCount % 240 === 0) {
+                    // Move up
+                    direction = { x: 0, y: -1 };
+                } else if (frameCount % 300 === 0) {
+                    // Move right again
+                    direction = { x: 1, y: 0 };
+                    frameCount = 0; // Reset cycle
+                }
+                
+                renderAnimatedSnake(snake, food, cellSize, cols, rows, foodCollected);
+            }
+            
+            animate();
+        }
+
+        function renderAnimatedSnake(snake, food, cellSize, cols, rows, foodCollected = false) {
+            // Clear canvas
+            animatedSnakeCtx.fillStyle = COLORS.BG;
+            animatedSnakeCtx.fillRect(0, 0, animatedSnakeCanvas.width, animatedSnakeCanvas.height);
+            
+            // Draw grid (subtle)
+            animatedSnakeCtx.strokeStyle = COLORS.GRID;
+            animatedSnakeCtx.lineWidth = 0.5;
+            for (let i = 0; i <= cols; i++) {
+                animatedSnakeCtx.beginPath();
+                animatedSnakeCtx.moveTo(i * cellSize, 0);
+                animatedSnakeCtx.lineTo(i * cellSize, animatedSnakeCanvas.height);
+                animatedSnakeCtx.stroke();
+            }
+            for (let i = 0; i <= rows; i++) {
+                animatedSnakeCtx.beginPath();
+                animatedSnakeCtx.moveTo(0, i * cellSize);
+                animatedSnakeCtx.lineTo(animatedSnakeCanvas.width, i * cellSize);
+                animatedSnakeCtx.stroke();
+            }
+            
+            // Draw food
+            if (!foodCollected) {
+                animatedSnakeCtx.fillStyle = COLORS.FOOD;
+                animatedSnakeCtx.fillRect(
+                    food.x * cellSize + 2,
+                    food.y * cellSize + 2,
+                    cellSize - 4,
+                    cellSize - 4
+                );
+            }
+            
+            // Draw snake
+            snake.forEach((seg, i) => {
+                const color = i === 0 ? lightenColor(myProfile.color, 10) : myProfile.color;
+                animatedSnakeCtx.fillStyle = color;
+                const padding = i === 0 ? 1 : 2;
+                animatedSnakeCtx.fillRect(
+                    seg.x * cellSize + padding,
+                    seg.y * cellSize + padding,
+                    cellSize - padding * 2,
+                    cellSize - padding * 2
+                );
+            });
+        }
+
+        function stopAnimatedSnake() {
+            if (animatedSnakeAnimationId) {
+                cancelAnimationFrame(animatedSnakeAnimationId);
+                animatedSnakeAnimationId = null;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
         // INITIALIZATION
         // ═══════════════════════════════════════════════════════════════
         function init() {
@@ -1641,6 +1876,8 @@
             if (hasProfile()) {
                 showView('initial');
             } else {
+                // Hide back button for first-time setup
+                document.getElementById('backFromProfile').style.display = 'none';
                 showView('profile');
             }
             
