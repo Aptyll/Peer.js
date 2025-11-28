@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Duel</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0c;
+            --bg-panel: #111114;
+            --grid-line: #1a1a1f;
+            --text-dim: #4a4a55;
+            --text-main: #e0e0e8;
+            --accent-cyan: #00f5d4;
+            --accent-magenta: #f72585;
+            --food-color: #fee440;
+            --border: #2a2a35;
+            --player-color: #00f5d4;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            height: 100vh;
+            justify-content: center;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .score-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 24px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+        }
+
+        .score-box.player1 {
+            border-left: 3px solid var(--player-color);
+        }
+
+        .score-box.player2 {
+            border-left: 3px solid var(--opponent-color, var(--accent-magenta));
+        }
+
+        .score-box.hidden {
+            display: none;
+        }
+
+        .score-label {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .score-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .score-box.player1 .score-value {
+            color: var(--player-color);
+        }
+
+        .score-box.player2 .score-value {
+            color: var(--opponent-color, var(--accent-magenta));
+        }
+
+        .player-name {
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .title {
+            font-size: 14px;
+            letter-spacing: 4px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        #gameCanvas {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            display: block;
+            max-width: 100%;
+            max-height: calc(100vh - 200px);
+        }
+
+        .status {
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        .status.connected {
+            color: var(--accent-cyan);
+        }
+
+        .status.waiting {
+            color: var(--food-color);
+        }
+
+        /* Connection Panel */
+        .connection-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            z-index: 100;
+        }
+
+        .connection-panel.hidden {
+            display: none;
+        }
+
+        .panel-title {
+            font-size: 24px;
+            letter-spacing: 8px;
+            color: var(--text-main);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .panel-subtitle {
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            max-width: 400px;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            font-family: inherit;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border: 1px solid var(--border);
+            background: var(--bg-panel);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: var(--border);
+        }
+
+        .btn.primary {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .btn.primary:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+        }
+
+        .btn.secondary {
+            border-color: var(--accent-magenta);
+            color: var(--accent-magenta);
+        }
+
+        .btn.secondary:hover {
+            background: var(--accent-magenta);
+            color: var(--bg-dark);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-label {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .input-field {
+            padding: 14px 20px;
+            font-family: inherit;
+            font-size: 16px;
+            letter-spacing: 4px;
+            text-align: center;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 280px;
+            text-transform: uppercase;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-dim);
+        }
+
+        .game-code {
+            font-size: 32px;
+            letter-spacing: 8px;
+            color: var(--accent-cyan);
+            padding: 20px 40px;
+            background: var(--bg-panel);
+            border: 1px solid var(--accent-cyan);
+            user-select: all;
+        }
+
+        .host-view, .join-view, .waiting-view, .profile-view, .controls-view {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .host-view.active, .join-view.active, .waiting-view.active, .profile-view.active, .controls-view.active {
+            display: flex;
+        }
+
+        /* Color Picker */
+        .color-picker {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin: 10px 0;
+        }
+
+        .color-option {
+            width: 44px;
+            height: 44px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: var(--text-main);
+        }
+
+        .color-option.selected::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: var(--bg-dark);
+        }
+
+        .profile-preview {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 24px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            margin-top: 10px;
+        }
+
+        .preview-snake {
+            display: flex;
+            gap: 2px;
+        }
+
+        .preview-segment {
+            width: 16px;
+            height: 16px;
+        }
+
+        .preview-name {
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--text-main);
+        }
+
+        .edit-profile-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            padding: 8px 14px;
+            font-family: inherit;
+            font-size: 9px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        .edit-profile-btn:hover {
+            border-color: var(--text-dim);
+            color: var(--text-main);
+        }
+
+        /* Control Selection */
+        .control-options {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .control-option {
+            padding: 20px 24px;
+            background: var(--bg-panel);
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .control-option:hover {
+            border-color: var(--text-dim);
+            background: var(--border);
+        }
+
+        .control-option.selected {
+            border-color: var(--player-color);
+            background: rgba(0, 245, 212, 0.1);
+        }
+
+        .control-label {
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--text-main);
+            text-transform: uppercase;
+        }
+
+        .control-description {
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .control-check {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-option.selected .control-check {
+            border-color: var(--player-color);
+            background: var(--player-color);
+        }
+
+        .control-option.selected .control-check::after {
+            content: '✓';
+            color: var(--bg-dark);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .initial-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .initial-view.hidden {
+            display: none;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            padding: 10px 16px;
+            font-family: inherit;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            border-color: var(--text-dim);
+            color: var(--text-main);
+        }
+
+        /* Game Over Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 12, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            z-index: 200;
+        }
+
+        .overlay.hidden {
+            display: none;
+        }
+
+        .overlay-title {
+            font-size: 36px;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+        }
+
+        .overlay-title.win {
+            color: var(--accent-cyan);
+        }
+
+        .overlay-title.lose {
+            color: var(--accent-magenta);
+        }
+
+        .overlay-subtitle {
+            font-size: 12px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+        }
+
+        .controls-hint {
+            position: fixed;
+            bottom: 20px;
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Connection Panel -->
+    <div class="connection-panel" id="connectionPanel">
+        <!-- Profile Setup View -->
+        <div class="profile-view" id="profileView">
+            <div class="panel-title">Create Profile</div>
+            <div class="panel-subtitle">Name your snake and choose a color</div>
+            
+            <div class="input-group">
+                <div class="input-label">Snake Name</div>
+                <input type="text" class="input-field" id="nameInput" placeholder="Enter name" maxlength="12">
+            </div>
+
+            <div class="input-group">
+                <div class="input-label">Snake Color</div>
+                <div class="color-picker" id="colorPicker">
+                    <div class="color-option" data-color="#00f5d4" style="background: #00f5d4;"></div>
+                    <div class="color-option" data-color="#00bbf9" style="background: #00bbf9;"></div>
+                    <div class="color-option" data-color="#9b5de5" style="background: #9b5de5;"></div>
+                    <div class="color-option" data-color="#f72585" style="background: #f72585;"></div>
+                    <div class="color-option" data-color="#ff006e" style="background: #ff006e;"></div>
+                    <div class="color-option" data-color="#fb5607" style="background: #fb5607;"></div>
+                    <div class="color-option" data-color="#ffbe0b" style="background: #ffbe0b;"></div>
+                    <div class="color-option" data-color="#8ac926" style="background: #8ac926;"></div>
+                    <div class="color-option" data-color="#06d6a0" style="background: #06d6a0;"></div>
+                    <div class="color-option" data-color="#e0e0e8" style="background: #e0e0e8;"></div>
+                </div>
+            </div>
+
+            <div class="profile-preview" id="profilePreview">
+                <div class="preview-snake">
+                    <div class="preview-segment" id="previewHead"></div>
+                    <div class="preview-segment" id="previewBody1"></div>
+                    <div class="preview-segment" id="previewBody2"></div>
+                </div>
+                <div class="preview-name" id="previewName">Snake</div>
+            </div>
+
+            <button class="btn primary" id="saveProfileBtn">Continue</button>
+        </div>
+
+        <!-- Controls Selection View -->
+        <div class="controls-view" id="controlsView">
+            <button class="back-btn" id="backFromControls">← Back</button>
+            <div class="panel-title">Select Controls</div>
+            <div class="panel-subtitle">Choose your preferred control method</div>
+            
+            <div class="control-options">
+                <div class="control-option" data-control="arrows">
+                    <div>
+                        <div class="control-label">Arrow Keys</div>
+                        <div class="control-description">Use ↑ ↓ ← → to move</div>
+                    </div>
+                    <div class="control-check"></div>
+                </div>
+                
+                <div class="control-option" data-control="wasd">
+                    <div>
+                        <div class="control-label">WASD</div>
+                        <div class="control-description">Use W A S D to move</div>
+                    </div>
+                    <div class="control-check"></div>
+                </div>
+                
+                <div class="control-option" data-control="mouse">
+                    <div>
+                        <div class="control-label">Mouse</div>
+                        <div class="control-description">Snake follows cursor</div>
+                    </div>
+                    <div class="control-check"></div>
+                </div>
+            </div>
+
+            <button class="btn primary" id="saveControlsBtn">Save Controls</button>
+        </div>
+
+        <!-- Initial View -->
+        <div class="initial-view" id="initialView">
+            <button class="edit-profile-btn" id="editProfileBtn">Edit Profile</button>
+            <button class="edit-profile-btn" id="editControlsBtn" style="top: 60px;">Edit Controls</button>
+            <div class="panel-title">Snake Duel</div>
+            <div class="panel-subtitle">
+                A minimalist 2-player snake game. One player hosts, the other joins. Arrow keys to move.
+            </div>
+            <div class="profile-preview" id="currentProfile">
+                <div class="preview-snake">
+                    <div class="preview-segment" id="currentHead"></div>
+                    <div class="preview-segment" id="currentBody1"></div>
+                    <div class="preview-segment" id="currentBody2"></div>
+                </div>
+                <div class="preview-name" id="currentName">Snake</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn primary" id="hostBtn">Host Game</button>
+                <button class="btn secondary" id="joinBtn">Join Game</button>
+                <button class="btn" id="soloBtn" style="border-color: var(--text-dim);">Play Solo</button>
+            </div>
+        </div>
+
+        <div class="host-view" id="hostView">
+            <button class="back-btn" id="backFromHost">← Back</button>
+            <div class="input-label">Your Game Code</div>
+            <div class="game-code" id="gameCode">------</div>
+            <div class="panel-subtitle">
+                Share this code with your opponent.<br>
+                <span class="loading-dots">Waiting for player to join</span>
+            </div>
+        </div>
+
+        <div class="join-view" id="joinView">
+            <button class="back-btn" id="backFromJoin">← Back</button>
+            <div class="input-group">
+                <div class="input-label">Enter Game Code</div>
+                <input type="text" class="input-field" id="codeInput" placeholder="------" maxlength="6">
+            </div>
+            <button class="btn primary" id="connectBtn">Connect</button>
+            <div class="panel-subtitle" id="joinStatus"></div>
+        </div>
+
+        <div class="waiting-view" id="waitingView">
+            <div class="panel-subtitle loading-dots">Connecting</div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div class="container">
+        <div class="header">
+            <div class="score-box player1">
+                <div class="player-name" id="myNameDisplay">You</div>
+                <div class="score-value" id="score1">0</div>
+            </div>
+            <div class="title">Snake Duel</div>
+            <div class="score-box player2">
+                <div class="player-name" id="opponentNameDisplay">Opponent</div>
+                <div class="score-value" id="score2">0</div>
+            </div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div class="status" id="status">Connecting...</div>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div class="overlay hidden" id="gameOverlay">
+        <div class="overlay-title" id="overlayTitle">Game Over</div>
+        <div class="overlay-subtitle" id="overlaySubtitle"></div>
+        <button class="btn primary" id="playAgainBtn">Play Again</button>
+    </div>
+
+    <div class="controls-hint" id="controlsHint">Arrow Keys to Move</div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CONFIGURATION
+        // ═══════════════════════════════════════════════════════════════
+        const CONFIG = {
+            CELL_SIZE: 24,
+            GAME_SPEED: 120,
+            INITIAL_LENGTH: 3,
+            WIN_SCORE: 10,
+            getGridSize() {
+                // Calculate grid size based on available viewport space
+                const maxWidth = window.innerWidth;
+                const maxHeight = window.innerHeight - 200; // Account for header/UI
+                const cols = Math.floor(maxWidth / this.CELL_SIZE);
+                const rows = Math.floor(maxHeight / this.CELL_SIZE);
+                return Math.min(cols, rows, 50); // Cap at 50 for performance
+            }
+        };
+        
+        // Current grid size (will be updated on resize)
+        let GRID_SIZE = CONFIG.getGridSize();
+
+        const COLORS = {
+            BG: '#111114',
+            GRID: '#1a1a1f',
+            PLAYER1: '#00f5d4',
+            PLAYER1_HEAD: '#00ffdd',
+            PLAYER2: '#f72585',
+            PLAYER2_HEAD: '#ff3399',
+            FOOD: '#fee440'
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // GAME STATE
+        // ═══════════════════════════════════════════════════════════════
+        let peer = null;
+        let conn = null;
+        let isHost = false;
+        let isSolo = false;
+        let gameRunning = false;
+        let gameLoop = null;
+
+        let mySnake = [];
+        let opponentSnake = [];
+        let myDirection = { x: 1, y: 0 };
+        let nextDirection = { x: 1, y: 0 };
+        let food = { x: 10, y: 10 };
+        let myScore = 0;
+        let opponentScore = 0;
+
+        // Profile
+        let myProfile = {
+            name: 'Snake',
+            color: '#00f5d4',
+            controls: 'arrows' // 'arrows', 'wasd', or 'mouse'
+        };
+        let opponentProfile = {
+            name: 'Opponent',
+            color: '#f72585'
+        };
+
+        // Mouse tracking for mouse controls
+        let mousePos = { x: 0, y: 0 };
+        let hoverCell = { x: -1, y: -1 }; // Cell the mouse is hovering over
+
+        // ═══════════════════════════════════════════════════════════════
+        // DOM ELEMENTS
+        // ═══════════════════════════════════════════════════════════════
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const connectionPanel = document.getElementById('connectionPanel');
+        const initialView = document.getElementById('initialView');
+        const hostView = document.getElementById('hostView');
+        const joinView = document.getElementById('joinView');
+        const waitingView = document.getElementById('waitingView');
+        const profileView = document.getElementById('profileView');
+        const gameCodeDisplay = document.getElementById('gameCode');
+        const codeInput = document.getElementById('codeInput');
+        const joinStatus = document.getElementById('joinStatus');
+        const status = document.getElementById('status');
+        const score1El = document.getElementById('score1');
+        const score2El = document.getElementById('score2');
+        const gameOverlay = document.getElementById('gameOverlay');
+        const overlayTitle = document.getElementById('overlayTitle');
+        const overlaySubtitle = document.getElementById('overlaySubtitle');
+        const myNameDisplay = document.getElementById('myNameDisplay');
+        const opponentNameDisplay = document.getElementById('opponentNameDisplay');
+        const nameInput = document.getElementById('nameInput');
+        const colorPicker = document.getElementById('colorPicker');
+
+        // Setup canvas
+        function resizeCanvas() {
+            GRID_SIZE = CONFIG.getGridSize();
+            canvas.width = GRID_SIZE * CONFIG.CELL_SIZE;
+            canvas.height = GRID_SIZE * CONFIG.CELL_SIZE;
+            canvas.style.width = canvas.width + 'px';
+            canvas.style.height = canvas.height + 'px';
+        }
+        
+        resizeCanvas();
+        
+        // Resize on window resize
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            if (gameRunning) {
+                render();
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // UTILITY FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        function generateCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return code;
+        }
+
+        function showView(view) {
+            initialView.classList.add('hidden');
+            hostView.classList.remove('active');
+            joinView.classList.remove('active');
+            waitingView.classList.remove('active');
+            profileView.classList.remove('active');
+            document.getElementById('controlsView').classList.remove('active');
+
+            if (view === 'initial') {
+                initialView.classList.remove('hidden');
+                updateCurrentProfileDisplay();
+                updateControlsHint();
+            } else if (view === 'host') {
+                hostView.classList.add('active');
+            } else if (view === 'join') {
+                joinView.classList.add('active');
+            } else if (view === 'waiting') {
+                waitingView.classList.add('active');
+            } else if (view === 'profile') {
+                profileView.classList.add('active');
+                loadProfileIntoEditor();
+            } else if (view === 'controls') {
+                document.getElementById('controlsView').classList.add('active');
+                loadControlsIntoEditor();
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // PROFILE FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        function loadProfile() {
+            const saved = localStorage.getItem('snakeDuelProfile');
+            if (saved) {
+                try {
+                    const loaded = JSON.parse(saved);
+                    myProfile = { ...myProfile, ...loaded };
+                } catch (e) {
+                    console.error('Failed to load profile:', e);
+                }
+            }
+            
+            // Ensure controls is set
+            if (!myProfile.controls) {
+                myProfile.controls = 'arrows';
+            }
+            
+            applyProfileColors();
+            updateControlsHint();
+        }
+
+        function saveProfile() {
+            localStorage.setItem('snakeDuelProfile', JSON.stringify(myProfile));
+            applyProfileColors();
+        }
+
+        function applyProfileColors() {
+            document.documentElement.style.setProperty('--player-color', myProfile.color);
+        }
+
+        function applyOpponentColors() {
+            document.documentElement.style.setProperty('--opponent-color', opponentProfile.color);
+        }
+
+        function loadProfileIntoEditor() {
+            nameInput.value = myProfile.name;
+            
+            // Select current color
+            document.querySelectorAll('.color-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.color === myProfile.color);
+            });
+            
+            updateProfilePreview();
+        }
+
+        function updateProfilePreview() {
+            const color = myProfile.color;
+            document.getElementById('previewHead').style.background = lightenColor(color, 10);
+            document.getElementById('previewBody1').style.background = color;
+            document.getElementById('previewBody2').style.background = color;
+            document.getElementById('previewName').textContent = myProfile.name || 'Snake';
+            document.getElementById('previewName').style.color = color;
+        }
+
+        function updateCurrentProfileDisplay() {
+            document.getElementById('currentHead').style.background = lightenColor(myProfile.color, 10);
+            document.getElementById('currentBody1').style.background = myProfile.color;
+            document.getElementById('currentBody2').style.background = myProfile.color;
+            document.getElementById('currentName').textContent = myProfile.name;
+            document.getElementById('currentName').style.color = myProfile.color;
+        }
+
+        function lightenColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, (num >> 16) + amt);
+            const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+            const B = Math.min(255, (num & 0x0000FF) + amt);
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
+        function hasProfile() {
+            return localStorage.getItem('snakeDuelProfile') !== null;
+        }
+
+        function loadControlsIntoEditor() {
+            // Select current control scheme
+            document.querySelectorAll('.control-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.control === myProfile.controls);
+            });
+        }
+
+        function updateControlsHint() {
+            const hint = document.getElementById('controlsHint');
+            const controls = myProfile.controls || 'arrows';
+            
+            switch (controls) {
+                case 'wasd':
+                    hint.textContent = 'W A S D to Move';
+                    break;
+                case 'mouse':
+                    hint.textContent = 'Move Mouse to Control';
+                    break;
+                default:
+                    hint.textContent = 'Arrow Keys to Move';
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // PEER CONNECTION
+        // ═══════════════════════════════════════════════════════════════
+        function hostGame() {
+            isSolo = false;
+            const code = generateCode();
+            isHost = true;
+            
+            // Show opponent score box
+            document.querySelector('.score-box.player2').classList.remove('hidden');
+
+            peer = new Peer(code, {
+                debug: 0
+            });
+
+            peer.on('open', (id) => {
+                gameCodeDisplay.textContent = id;
+                showView('host');
+            });
+
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupConnection();
+            });
+
+            peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                if (err.type === 'unavailable-id') {
+                    // Try again with new code
+                    peer.destroy();
+                    hostGame();
+                }
+            });
+        }
+
+        function joinGame(code) {
+            isSolo = false;
+            isHost = false;
+            showView('waiting');
+            
+            // Show opponent score box
+            document.querySelector('.score-box.player2').classList.remove('hidden');
+
+            peer = new Peer({
+                debug: 0
+            });
+
+            peer.on('open', () => {
+                conn = peer.connect(code.toUpperCase());
+                setupConnection();
+            });
+
+            peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                joinStatus.textContent = 'Connection failed. Check code and try again.';
+                showView('join');
+            });
+        }
+
+        function setupConnection() {
+            conn.on('open', () => {
+                connectionPanel.classList.add('hidden');
+                status.textContent = 'Connected';
+                status.classList.add('connected');
+                
+                // Send our profile to opponent
+                send({ type: 'profile', profile: myProfile });
+
+                // Update display
+                myNameDisplay.textContent = myProfile.name;
+                updateControlsHint();
+                
+                if (isHost) {
+                    initGame();
+                    startGame();
+                }
+            });
+
+            conn.on('data', (data) => {
+                handleMessage(data);
+            });
+
+            conn.on('close', () => {
+                status.textContent = 'Opponent disconnected';
+                status.classList.remove('connected');
+                gameRunning = false;
+                if (gameLoop) clearInterval(gameLoop);
+            });
+        }
+
+        function send(data) {
+            if (conn && conn.open) {
+                conn.send(data);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // GAME LOGIC
+        // ═══════════════════════════════════════════════════════════════
+        function initGame() {
+            myScore = 0;
+            opponentScore = 0;
+            
+            if (isHost) {
+                // Host is cyan, starts left side
+                mySnake = [];
+                for (let i = CONFIG.INITIAL_LENGTH - 1; i >= 0; i--) {
+                    mySnake.push({ x: 2 + i, y: Math.floor(GRID_SIZE / 2) });
+                }
+                myDirection = { x: 1, y: 0 };
+                nextDirection = { x: 1, y: 0 };
+
+                // Initialize mouse position for mouse controls
+                if (myProfile.controls === 'mouse') {
+                    const head = mySnake[0];
+                    mousePos.x = head.x * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                    mousePos.y = head.y * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                }
+
+                // Guest starts right side
+                opponentSnake = [];
+                for (let i = CONFIG.INITIAL_LENGTH - 1; i >= 0; i--) {
+                    opponentSnake.push({ x: GRID_SIZE - 3 - i, y: Math.floor(GRID_SIZE / 2) });
+                }
+
+                spawnFood();
+
+                // Send initial state to opponent
+                send({
+                    type: 'init',
+                    yourSnake: opponentSnake,
+                    mySnake: mySnake,
+                    food: food
+                });
+            }
+
+            updateScoreDisplay();
+        }
+
+        function startSoloGame() {
+            isSolo = true;
+            isHost = false;
+            
+            connectionPanel.classList.add('hidden');
+            status.textContent = 'Solo Mode';
+            status.classList.add('connected');
+            
+            // Hide opponent score box
+            document.querySelector('.score-box.player2').classList.add('hidden');
+            
+            // Initialize solo game
+            myScore = 0;
+            opponentScore = 0;
+            
+            // Snake starts in center-left
+            mySnake = [];
+            for (let i = CONFIG.INITIAL_LENGTH - 1; i >= 0; i--) {
+                mySnake.push({ x: 2 + i, y: Math.floor(GRID_SIZE / 2) });
+            }
+            myDirection = { x: 1, y: 0 };
+            nextDirection = { x: 1, y: 0 };
+            
+            // Initialize mouse position for mouse controls
+            if (myProfile.controls === 'mouse') {
+                const head = mySnake[0];
+                mousePos.x = head.x * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                mousePos.y = head.y * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+            }
+            
+            // No opponent snake in solo mode
+            opponentSnake = [];
+            
+            spawnFood();
+            updateScoreDisplay();
+            myNameDisplay.textContent = myProfile.name;
+            updateControlsHint();
+            
+            startGame();
+        }
+
+        function startGame() {
+            gameRunning = true;
+            
+            if (gameLoop) clearInterval(gameLoop);
+            
+            gameLoop = setInterval(() => {
+                if (gameRunning) {
+                    // Update mouse direction for mouse controls
+                    if (myProfile.controls === 'mouse') {
+                        updateMouseDirection();
+                    }
+                    update();
+                    render();
+                }
+            }, CONFIG.GAME_SPEED);
+        }
+
+        function update() {
+            myDirection = { ...nextDirection };
+
+            // Move snake
+            const head = { 
+                x: mySnake[0].x + myDirection.x, 
+                y: mySnake[0].y + myDirection.y 
+            };
+
+            // Check wall collision
+            if (head.x < 0 || head.x >= GRID_SIZE || 
+                head.y < 0 || head.y >= GRID_SIZE) {
+                handleDeath('wall');
+                return;
+            }
+
+            // Check self collision
+            for (let i = 0; i < mySnake.length; i++) {
+                if (head.x === mySnake[i].x && head.y === mySnake[i].y) {
+                    handleDeath('self');
+                    return;
+                }
+            }
+
+            // Check opponent collision (skip in solo mode)
+            if (!isSolo) {
+                for (let i = 0; i < opponentSnake.length; i++) {
+                    if (head.x === opponentSnake[i].x && head.y === opponentSnake[i].y) {
+                        handleDeath('opponent');
+                        return;
+                    }
+                }
+            }
+
+            mySnake.unshift(head);
+
+            // Check food
+            if (head.x === food.x && head.y === food.y) {
+                myScore++;
+                updateScoreDisplay();
+                
+                if (isSolo || isHost) {
+                    spawnFood();
+                    if (!isSolo) {
+                        send({ type: 'food', food: food });
+                    }
+                }
+
+                if (!isSolo) {
+                    send({ type: 'score', score: myScore });
+                }
+
+                if (myScore >= CONFIG.WIN_SCORE) {
+                    handleWin();
+                    return;
+                }
+            } else {
+                mySnake.pop();
+            }
+
+            // Send position to opponent (skip in solo mode)
+            if (!isSolo) {
+                send({ 
+                    type: 'position', 
+                    snake: mySnake,
+                    direction: myDirection
+                });
+            }
+        }
+
+        function spawnFood() {
+            let valid = false;
+            while (!valid) {
+                food = {
+                    x: Math.floor(Math.random() * GRID_SIZE),
+                    y: Math.floor(Math.random() * GRID_SIZE)
+                };
+
+                valid = true;
+
+                // Check not on my snake
+                for (const seg of mySnake) {
+                    if (seg.x === food.x && seg.y === food.y) {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                // Check not on opponent snake (skip in solo mode)
+                if (valid && !isSolo) {
+                    for (const seg of opponentSnake) {
+                        if (seg.x === food.x && seg.y === food.y) {
+                            valid = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        function handleDeath(reason) {
+            gameRunning = false;
+            if (!isSolo) {
+                send({ type: 'death', reason: reason });
+            }
+            showGameOver(false, `You hit ${reason === 'wall' ? 'the wall' : reason === 'self' ? 'yourself' : 'opponent'}`);
+        }
+
+        function handleWin() {
+            gameRunning = false;
+            if (!isSolo) {
+                send({ type: 'win' });
+            }
+            showGameOver(true, `Score: ${myScore}`);
+        }
+
+        function showGameOver(won, subtitle) {
+            if (gameLoop) clearInterval(gameLoop);
+            
+            overlayTitle.textContent = won ? 'Victory' : 'Defeated';
+            overlayTitle.className = 'overlay-title ' + (won ? 'win' : 'lose');
+            overlaySubtitle.textContent = subtitle;
+            gameOverlay.classList.remove('hidden');
+        }
+
+        function handleMessage(data) {
+            switch (data.type) {
+                case 'profile':
+                    opponentProfile = data.profile;
+                    opponentNameDisplay.textContent = opponentProfile.name;
+                    applyOpponentColors();
+                    break;
+
+                case 'init':
+                    mySnake = data.yourSnake;
+                    opponentSnake = data.mySnake;
+                    food = data.food;
+                    myDirection = { x: -1, y: 0 };
+                    nextDirection = { x: -1, y: 0 };
+                    
+                    // Initialize mouse position for mouse controls
+                    if (myProfile.controls === 'mouse' && mySnake.length > 0) {
+                        const head = mySnake[0];
+                        mousePos.x = head.x * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                        mousePos.y = head.y * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                    }
+                    
+                    myScore = 0;
+                    opponentScore = 0;
+                    updateScoreDisplay();
+                    startGame();
+                    break;
+
+                case 'position':
+                    opponentSnake = data.snake;
+                    break;
+
+                case 'food':
+                    food = data.food;
+                    break;
+
+                case 'score':
+                    opponentScore = data.score;
+                    updateScoreDisplay();
+                    break;
+
+                case 'death':
+                    showGameOver(true, 'Opponent crashed!');
+                    break;
+
+                case 'win':
+                    showGameOver(false, 'Opponent reached ' + CONFIG.WIN_SCORE);
+                    break;
+
+                case 'restart':
+                    gameOverlay.classList.add('hidden');
+                    initGame();
+                    startGame();
+                    break;
+            }
+
+            render();
+        }
+
+        function updateScoreDisplay() {
+            score1El.textContent = myScore;
+            score2El.textContent = opponentScore;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // RENDERING
+        // ═══════════════════════════════════════════════════════════════
+        function render() {
+            // Clear
+            ctx.fillStyle = COLORS.BG;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid
+            ctx.strokeStyle = COLORS.GRID;
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= GRID_SIZE; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * CONFIG.CELL_SIZE, 0);
+                ctx.lineTo(i * CONFIG.CELL_SIZE, canvas.height);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(0, i * CONFIG.CELL_SIZE);
+                ctx.lineTo(canvas.width, i * CONFIG.CELL_SIZE);
+                ctx.stroke();
+            }
+
+            // Mouse control visualization (dotted line and hover cell)
+            if (gameRunning && myProfile.controls === 'mouse' && mySnake.length > 0) {
+                const head = mySnake[0];
+                const headPixelX = head.x * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                const headPixelY = head.y * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                
+                // Draw dotted line from snake head to cursor
+                ctx.strokeStyle = myProfile.color;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(headPixelX, headPixelY);
+                ctx.lineTo(mousePos.x, mousePos.y);
+                ctx.stroke();
+                ctx.setLineDash([]); // Reset line dash
+                
+                // Highlight hover cell
+                if (hoverCell.x >= 0 && hoverCell.y >= 0 && 
+                    hoverCell.x < GRID_SIZE && hoverCell.y < GRID_SIZE) {
+                    ctx.fillStyle = myProfile.color;
+                    ctx.globalAlpha = 0.2;
+                    ctx.fillRect(
+                        hoverCell.x * CONFIG.CELL_SIZE,
+                        hoverCell.y * CONFIG.CELL_SIZE,
+                        CONFIG.CELL_SIZE,
+                        CONFIG.CELL_SIZE
+                    );
+                    ctx.globalAlpha = 1.0;
+                    
+                    // Draw border around hover cell
+                    ctx.strokeStyle = myProfile.color;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(
+                        hoverCell.x * CONFIG.CELL_SIZE + 1,
+                        hoverCell.y * CONFIG.CELL_SIZE + 1,
+                        CONFIG.CELL_SIZE - 2,
+                        CONFIG.CELL_SIZE - 2
+                    );
+                }
+            }
+
+            // Food
+            ctx.fillStyle = COLORS.FOOD;
+            ctx.fillRect(
+                food.x * CONFIG.CELL_SIZE + 2,
+                food.y * CONFIG.CELL_SIZE + 2,
+                CONFIG.CELL_SIZE - 4,
+                CONFIG.CELL_SIZE - 4
+            );
+
+            // My snake
+            mySnake.forEach((seg, i) => {
+                ctx.fillStyle = i === 0 ? lightenColor(myProfile.color, 10) : myProfile.color;
+                const padding = i === 0 ? 1 : 2;
+                ctx.fillRect(
+                    seg.x * CONFIG.CELL_SIZE + padding,
+                    seg.y * CONFIG.CELL_SIZE + padding,
+                    CONFIG.CELL_SIZE - padding * 2,
+                    CONFIG.CELL_SIZE - padding * 2
+                );
+            });
+
+            // Opponent snake (skip in solo mode)
+            if (!isSolo) {
+                opponentSnake.forEach((seg, i) => {
+                    ctx.fillStyle = i === 0 ? lightenColor(opponentProfile.color, 10) : opponentProfile.color;
+                    const padding = i === 0 ? 1 : 2;
+                    ctx.fillRect(
+                        seg.x * CONFIG.CELL_SIZE + padding,
+                        seg.y * CONFIG.CELL_SIZE + padding,
+                        CONFIG.CELL_SIZE - padding * 2,
+                        CONFIG.CELL_SIZE - padding * 2
+                    );
+                });
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // INPUT HANDLING
+        // ═══════════════════════════════════════════════════════════════
+        function handleDirectionInput(newDir) {
+            if (!gameRunning) return;
+            
+            // Prevent reversing into self
+            if (newDir.x === -myDirection.x && newDir.y === -myDirection.y) {
+                return;
+            }
+            
+            // Prevent same direction
+            if (newDir.x === myDirection.x && newDir.y === myDirection.y) {
+                return;
+            }
+            
+            nextDirection = newDir;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+
+            const controls = myProfile.controls || 'arrows';
+
+            if (controls === 'arrows') {
+                switch (e.key) {
+                    case 'ArrowUp':
+                        handleDirectionInput({ x: 0, y: -1 });
+                        e.preventDefault();
+                        break;
+                    case 'ArrowDown':
+                        handleDirectionInput({ x: 0, y: 1 });
+                        e.preventDefault();
+                        break;
+                    case 'ArrowLeft':
+                        handleDirectionInput({ x: -1, y: 0 });
+                        e.preventDefault();
+                        break;
+                    case 'ArrowRight':
+                        handleDirectionInput({ x: 1, y: 0 });
+                        e.preventDefault();
+                        break;
+                }
+            } else if (controls === 'wasd') {
+                switch (e.key.toLowerCase()) {
+                    case 'w':
+                        handleDirectionInput({ x: 0, y: -1 });
+                        e.preventDefault();
+                        break;
+                    case 's':
+                        handleDirectionInput({ x: 0, y: 1 });
+                        e.preventDefault();
+                        break;
+                    case 'a':
+                        handleDirectionInput({ x: -1, y: 0 });
+                        e.preventDefault();
+                        break;
+                    case 'd':
+                        handleDirectionInput({ x: 1, y: 0 });
+                        e.preventDefault();
+                        break;
+                }
+            }
+        });
+
+        // Mouse tracking for mouse controls
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mousePos.x = e.clientX - rect.left;
+            mousePos.y = e.clientY - rect.top;
+            
+            // Calculate hover cell
+            hoverCell.x = Math.floor(mousePos.x / CONFIG.CELL_SIZE);
+            hoverCell.y = Math.floor(mousePos.y / CONFIG.CELL_SIZE);
+            
+            // Clamp to grid bounds
+            if (hoverCell.x < 0 || hoverCell.x >= GRID_SIZE) hoverCell.x = -1;
+            if (hoverCell.y < 0 || hoverCell.y >= GRID_SIZE) hoverCell.y = -1;
+            
+            if (gameRunning && myProfile.controls === 'mouse') {
+                updateMouseDirection();
+            }
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            hoverCell.x = -1;
+            hoverCell.y = -1;
+        });
+
+        function updateMouseDirection() {
+            if (!gameRunning || myProfile.controls !== 'mouse' || mySnake.length === 0) return;
+            
+            const head = mySnake[0];
+            const headPixelX = head.x * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+            const headPixelY = head.y * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+            
+            const dx = mousePos.x - headPixelX;
+            const dy = mousePos.y - headPixelY;
+            
+            // Only change direction if mouse is far enough away
+            const threshold = CONFIG.CELL_SIZE * 0.5;
+            if (Math.abs(dx) < threshold && Math.abs(dy) < threshold) {
+                return;
+            }
+            
+            // Determine direction based on larger axis
+            let newDir;
+            if (Math.abs(dx) > Math.abs(dy)) {
+                // Horizontal movement
+                newDir = { x: dx > 0 ? 1 : -1, y: 0 };
+            } else {
+                // Vertical movement
+                newDir = { x: 0, y: dy > 0 ? 1 : -1 };
+            }
+            
+            handleDirectionInput(newDir);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // UI EVENT HANDLERS
+        // ═══════════════════════════════════════════════════════════════
+        document.getElementById('hostBtn').addEventListener('click', hostGame);
+        
+        document.getElementById('joinBtn').addEventListener('click', () => {
+            showView('join');
+            codeInput.focus();
+        });
+
+        document.getElementById('soloBtn').addEventListener('click', startSoloGame);
+
+        document.getElementById('connectBtn').addEventListener('click', () => {
+            const code = codeInput.value.trim();
+            if (code.length >= 4) {
+                joinGame(code);
+            } else {
+                joinStatus.textContent = 'Enter a valid game code';
+            }
+        });
+
+        codeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('connectBtn').click();
+            }
+        });
+
+        document.getElementById('backFromHost').addEventListener('click', () => {
+            if (peer) peer.destroy();
+            peer = null;
+            showView('initial');
+        });
+
+        document.getElementById('backFromJoin').addEventListener('click', () => {
+            if (peer) peer.destroy();
+            peer = null;
+            showView('initial');
+        });
+
+        document.getElementById('backFromControls').addEventListener('click', () => {
+            showView('initial');
+        });
+
+        document.getElementById('playAgainBtn').addEventListener('click', () => {
+            if (isSolo) {
+                gameOverlay.classList.add('hidden');
+                startSoloGame();
+            } else if (isHost) {
+                gameOverlay.classList.add('hidden');
+                initGame();
+                startGame();
+            } else {
+                send({ type: 'restart' });
+                gameOverlay.classList.add('hidden');
+                // Wait for host to send init
+            }
+        });
+
+        // Profile handlers
+        document.getElementById('editProfileBtn').addEventListener('click', () => {
+            showView('profile');
+        });
+
+        document.getElementById('editControlsBtn').addEventListener('click', () => {
+            showView('controls');
+        });
+
+        document.getElementById('saveProfileBtn').addEventListener('click', () => {
+            const name = nameInput.value.trim() || 'Snake';
+            myProfile.name = name;
+            saveProfile();
+            
+            // Show controls selection if not set, otherwise go to main menu
+            if (!myProfile.controls) {
+                showView('controls');
+            } else {
+                showView('initial');
+            }
+        });
+
+        // Controls handlers
+        document.querySelectorAll('.control-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.control-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                myProfile.controls = option.dataset.control;
+            });
+        });
+
+        document.getElementById('saveControlsBtn').addEventListener('click', () => {
+            if (!myProfile.controls) {
+                myProfile.controls = 'arrows'; // Default
+            }
+            saveProfile();
+            showView('initial');
+            updateControlsHint();
+        });
+
+        // Color picker
+        colorPicker.addEventListener('click', (e) => {
+            const colorOption = e.target.closest('.color-option');
+            if (colorOption) {
+                document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                colorOption.classList.add('selected');
+                myProfile.color = colorOption.dataset.color;
+                updateProfilePreview();
+            }
+        });
+
+        // Name input live preview
+        nameInput.addEventListener('input', () => {
+            myProfile.name = nameInput.value.trim() || 'Snake';
+            updateProfilePreview();
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════
+        function init() {
+            loadProfile();
+            
+            // Show profile setup if first time, otherwise show main menu
+            if (hasProfile()) {
+                showView('initial');
+            } else {
+                showView('profile');
+            }
+            
+            render();
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
