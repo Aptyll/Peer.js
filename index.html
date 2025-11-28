@@ -1125,8 +1125,8 @@
                 return;
             }
 
-            // Check self collision
-            for (let i = 0; i < mySnake.length; i++) {
+            // Check self collision (skip head at index 0, check body segments)
+            for (let i = 1; i < mySnake.length; i++) {
                 if (head.x === mySnake[i].x && head.y === mySnake[i].y) {
                     handleDeath('self');
                     return;
