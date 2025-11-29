@@ -1143,15 +1143,17 @@
         function setupConnection() {
             conn.on('open', () => {
                 connectionPanel.classList.add('hidden');
-                status.textContent = 'Connected';
-                status.classList.add('connected');
+                status.textContent = '';
+                status.classList.remove('connected');
+                
+                // Hide controls hint when game starts
+                document.getElementById('controlsHint').style.display = 'none';
                 
                 // Send our profile to opponent
                 send({ type: 'profile', profile: myProfile });
 
                 // Update display
                 myNameDisplay.textContent = myProfile.name;
-                updateControlsHint();
                 
                 if (isHost) {
                     initGame();
@@ -1225,8 +1227,8 @@
             isHost = false;
             
             connectionPanel.classList.add('hidden');
-            status.textContent = 'Solo Mode';
-            status.classList.add('connected');
+            status.textContent = '';
+            status.classList.remove('connected');
             
             // Hide opponent score box
             document.querySelector('.score-box.player2').classList.add('hidden');
@@ -1256,13 +1258,18 @@
             spawnFood();
             updateScoreDisplay();
             myNameDisplay.textContent = myProfile.name;
-            updateControlsHint();
             
             startGame();
         }
 
         function startGame() {
             gameRunning = true;
+            
+            // Hide status, controls hint, and title when game is active
+            status.textContent = '';
+            status.classList.remove('connected');
+            document.getElementById('controlsHint').style.display = 'none';
+            document.querySelector('.title').style.display = 'none';
             
             if (gameLoop) clearInterval(gameLoop);
             
@@ -1328,12 +1335,14 @@
 
                 if (!isSolo) {
                     send({ type: 'score', score: myScore });
+                    
+                    // Only check win condition in multiplayer mode
+                    if (myScore >= CONFIG.WIN_SCORE) {
+                        handleWin();
+                        return;
+                    }
                 }
-
-                if (myScore >= CONFIG.WIN_SCORE) {
-                    handleWin();
-                    return;
-                }
+                // In solo mode, score continues indefinitely
             } else {
                 mySnake.pop();
             }
@@ -1756,6 +1765,9 @@
             // Hide game overlay if visible
             gameOverlay.classList.add('hidden');
             
+            // Show title again
+            document.querySelector('.title').style.display = '';
+            
             // Show connection panel and initial view
             connectionPanel.classList.remove('hidden');
             showView('initial');
@@ -1785,6 +1797,9 @@
             
             // Hide game overlay
             gameOverlay.classList.add('hidden');
+            
+            // Show title again
+            document.querySelector('.title').style.display = '';
             
             // Show connection panel and initial view
             connectionPanel.classList.remove('hidden');
