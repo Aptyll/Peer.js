@@ -178,7 +178,7 @@
         .btn-group {
             display: flex;
             gap: 20px;
-            margin-top: 20px;
+            margin-top: 5px;
         }
 
         .btn {
@@ -199,23 +199,30 @@
         }
 
         .btn.primary {
-            border-color: var(--accent-cyan);
-            color: var(--accent-cyan);
+            border-color: var(--border);
         }
 
         .btn.primary:hover {
-            background: var(--accent-cyan);
-            color: var(--bg-dark);
+            background: var(--border);
         }
 
         .btn.secondary {
-            border-color: var(--accent-magenta);
-            color: var(--accent-magenta);
+            border-color: var(--border);
         }
 
         .btn.secondary:hover {
-            background: var(--accent-magenta);
-            color: var(--bg-dark);
+            background: var(--border);
+        }
+
+        /* Main menu buttons use player color */
+        .initial-view .btn {
+            border-color: var(--border);
+            color: var(--player-color);
+        }
+
+        .initial-view .btn:hover {
+            background: var(--border);
+            color: var(--player-color);
         }
 
         .input-group {
@@ -311,15 +318,24 @@
             background: var(--bg-dark);
         }
 
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+            width: 100%;
+        }
+
         .profile-preview {
             display: flex;
             align-items: center;
-            gap: 16px;
-            padding: 16px 24px;
+            gap: 24px;
+            padding: 24px 32px;
             background: var(--bg-panel);
             border: 1px solid var(--border);
-            margin-top: 10px;
             position: relative;
+            width: 100%;
+            justify-content: center;
         }
 
         .profile-preview.clickable {
@@ -369,11 +385,22 @@
             height: 16px;
         }
 
+        .preview-snake-large {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .preview-segment-large {
+            width: 32px;
+            height: 32px;
+        }
+
         .animated-snake-container {
             width: 100%;
             height: 100px;
             position: relative;
-            margin: 20px 0;
+            margin: 10px 0 5px 0;
             display: flex;
             justify-content: flex-start;
             align-items: center;
@@ -388,10 +415,19 @@
         }
 
         .preview-name {
-            font-size: 14px;
-            letter-spacing: 2px;
+            font-size: 18px;
+            letter-spacing: 3px;
             color: var(--text-main);
+            font-weight: 700;
         }
+
+        .profile-preview .preview-controls {
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
 
         .edit-profile-btn {
             position: absolute;
@@ -482,7 +518,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
         }
 
         .initial-view.hidden {
@@ -647,16 +683,19 @@
 
         <!-- Initial View -->
         <div class="initial-view" id="initialView">
-            <div class="panel-title">Snake Duel</div>
-            <div class="panel-subtitle">
-                A minimalist 2-player snake game. One player hosts, the other joins. Arrow keys to move.
-            </div>
-            <div class="profile-preview clickable" id="currentProfile">
-                <div class="preview-info">
-                    <div class="preview-name" id="currentName">Snake</div>
-                    <div class="preview-controls" id="currentControls">Arrow Keys</div>
+            <div class="profile-section">
+                <div class="profile-preview clickable" id="currentProfile">
+                    <div class="preview-snake-large">
+                        <div class="preview-segment-large" id="currentHead"></div>
+                        <div class="preview-segment-large" id="currentBody1"></div>
+                        <div class="preview-segment-large" id="currentBody2"></div>
+                    </div>
+                    <div class="preview-info">
+                        <div class="preview-name" id="currentName">Snake</div>
+                        <div class="preview-controls" id="currentControls">Arrow Keys</div>
+                    </div>
+                    <div class="edit-indicator">✎</div>
                 </div>
-                <div class="edit-indicator">✎</div>
             </div>
             <div class="animated-snake-container" id="animatedSnakeContainer">
                 <canvas class="animated-snake-canvas" id="animatedSnakeCanvas"></canvas>
@@ -664,7 +703,7 @@
             <div class="btn-group">
                 <button class="btn primary" id="hostBtn">Host</button>
                 <button class="btn secondary" id="joinBtn">Join</button>
-                <button class="btn" id="soloBtn" style="border-color: var(--text-dim);">Solo</button>
+                <button class="btn" id="soloBtn">Solo</button>
             </div>
         </div>
 
@@ -956,6 +995,12 @@
             const controlsText = myProfile.controls === 'wasd' ? 'WASD' : 
                                 myProfile.controls === 'mouse' ? 'Mouse' : 'Arrow Keys';
             document.getElementById('currentControls').textContent = controlsText;
+            
+            // Update large snake preview
+            const color = myProfile.color;
+            document.getElementById('currentHead').style.background = lightenColor(color, 10);
+            document.getElementById('currentBody1').style.background = color;
+            document.getElementById('currentBody2').style.background = color;
         }
 
         function lightenColor(color, percent) {
@@ -1671,6 +1716,7 @@
             // Show back button now that profile exists
             document.getElementById('backFromProfile').style.display = 'block';
             showView('initial');
+            updateCurrentProfileDisplay();
         });
 
         // Controls handlers
@@ -1710,6 +1756,8 @@
         function setupAnimatedSnake() {
             const container = document.getElementById('animatedSnakeContainer');
             const btnGroup = document.querySelector('.btn-group');
+            const profileSection = document.querySelector('.profile-section');
+            const profilePreview = document.getElementById('currentProfile');
             
             if (!container || !btnGroup) return;
             
@@ -1722,6 +1770,14 @@
             container.style.width = width + 'px';
             animatedSnakeCanvas.width = width;
             animatedSnakeCanvas.height = containerRect.height || 100;
+            
+            // Match profile section and preview width to button group width
+            if (profileSection) {
+                profileSection.style.width = width + 'px';
+            }
+            if (profilePreview) {
+                profilePreview.style.width = width + 'px';
+            }
         }
 
         function startAnimatedSnake() {
@@ -1875,6 +1931,7 @@
             // Show profile setup if first time, otherwise show main menu
             if (hasProfile()) {
                 showView('initial');
+                updateCurrentProfileDisplay();
             } else {
                 // Hide back button for first-time setup
                 document.getElementById('backFromProfile').style.display = 'none';
