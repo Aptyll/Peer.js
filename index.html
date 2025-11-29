@@ -254,20 +254,39 @@
 
         .input-field:focus {
             outline: none;
-            border-color: var(--accent-cyan);
+            border-color: var(--player-color);
+            color: var(--player-color);
         }
 
         .input-field::placeholder {
             color: var(--text-dim);
         }
 
+        #codeInput {
+            border-color: var(--player-color);
+            color: var(--player-color);
+        }
+
+        #codeInput:focus {
+            border-color: var(--player-color);
+            color: var(--player-color);
+        }
+
+        #nameInput {
+            color: var(--player-color);
+        }
+
+        #nameInput:focus {
+            color: var(--player-color);
+        }
+
         .game-code {
             font-size: 32px;
             letter-spacing: 8px;
-            color: var(--accent-cyan);
+            color: var(--player-color);
             padding: 20px 40px;
             background: var(--bg-panel);
-            border: 1px solid var(--accent-cyan);
+            border: 1px solid var(--player-color);
             user-select: all;
         }
 
@@ -276,6 +295,11 @@
             flex-direction: column;
             align-items: center;
             gap: 20px;
+        }
+
+        .profile-view {
+            justify-content: flex-start;
+            padding-top: 80px;
         }
 
         .host-view.active, .join-view.active, .waiting-view.active, .profile-view.active {
@@ -452,10 +476,11 @@
         /* Control Selection */
         .control-options {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 16px;
             width: 100%;
-            max-width: 400px;
+            max-width: 600px;
+            justify-content: center;
         }
 
         .control-option {
@@ -465,8 +490,12 @@
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
+            flex: 1;
+            gap: 12px;
+            position: relative;
         }
 
         .control-option:hover {
@@ -514,6 +543,17 @@
             font-weight: bold;
         }
 
+        .control-option > div:first-child {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .control-check {
+            order: -1;
+        }
+
         .initial-view {
             display: flex;
             flex-direction: column;
@@ -529,13 +569,13 @@
             position: absolute;
             top: 30px;
             left: 30px;
-            padding: 10px 16px;
+            padding: 20px 32px;
             font-family: inherit;
-            font-size: 10px;
-            letter-spacing: 2px;
+            font-size: 20px;
+            letter-spacing: 4px;
             text-transform: uppercase;
             background: transparent;
-            border: 1px solid var(--border);
+            border: 2px solid var(--border);
             color: var(--text-dim);
             cursor: pointer;
         }
@@ -576,13 +616,38 @@
         }
 
         .overlay-title.lose {
-            color: var(--accent-magenta);
+            color: var(--player-color);
         }
 
         .overlay-subtitle {
             font-size: 12px;
             color: var(--text-dim);
             letter-spacing: 2px;
+        }
+
+        .overlay .btn-group {
+            display: flex;
+            gap: 20px;
+        }
+
+        .overlay .btn.primary {
+            border-color: var(--player-color);
+            color: var(--player-color);
+        }
+
+        .overlay .btn.primary:hover {
+            background: var(--player-color);
+            color: var(--bg-dark);
+        }
+
+        .overlay .btn.secondary {
+            border-color: var(--border);
+            color: var(--text-main);
+        }
+
+        .overlay .btn.secondary:hover {
+            background: var(--border);
+            color: var(--text-main);
         }
 
         .controls-hint {
@@ -612,8 +677,6 @@
         <!-- Profile Setup View -->
         <div class="profile-view" id="profileView">
             <button class="back-btn" id="backFromProfile">← Back</button>
-            <div class="panel-title">Edit Profile</div>
-            <div class="panel-subtitle">Customize your snake and controls</div>
             
             <div class="input-group">
                 <div class="input-label">Snake Name</div>
@@ -623,16 +686,11 @@
             <div class="input-group">
                 <div class="input-label">Snake Color</div>
                 <div class="color-picker" id="colorPicker">
-                    <div class="color-option" data-color="#00f5d4" style="background: #00f5d4;"></div>
+                    <div class="color-option" data-color="#e0e0e8" style="background: #e0e0e8;"></div>
+                    <div class="color-option" data-color="#ff6b6b" style="background: #ff6b6b;"></div>
+                    <div class="color-option" data-color="#fb5607" style="background: #fb5607;"></div>
                     <div class="color-option" data-color="#00bbf9" style="background: #00bbf9;"></div>
                     <div class="color-option" data-color="#9b5de5" style="background: #9b5de5;"></div>
-                    <div class="color-option" data-color="#f72585" style="background: #f72585;"></div>
-                    <div class="color-option" data-color="#ff006e" style="background: #ff006e;"></div>
-                    <div class="color-option" data-color="#fb5607" style="background: #fb5607;"></div>
-                    <div class="color-option" data-color="#ffbe0b" style="background: #ffbe0b;"></div>
-                    <div class="color-option" data-color="#8ac926" style="background: #8ac926;"></div>
-                    <div class="color-option" data-color="#06d6a0" style="background: #06d6a0;"></div>
-                    <div class="color-option" data-color="#e0e0e8" style="background: #e0e0e8;"></div>
                 </div>
             </div>
 
@@ -662,18 +720,6 @@
                         </div>
                         <div class="control-check"></div>
                     </div>
-                </div>
-            </div>
-
-            <div class="profile-preview" id="profilePreview">
-                <div class="preview-snake">
-                    <div class="preview-segment" id="previewHead"></div>
-                    <div class="preview-segment" id="previewBody1"></div>
-                    <div class="preview-segment" id="previewBody2"></div>
-                </div>
-                <div class="preview-info">
-                    <div class="preview-name" id="previewName">Snake</div>
-                    <div class="preview-controls" id="previewControls">Arrow Keys</div>
                 </div>
             </div>
 
@@ -734,6 +780,7 @@
 
     <!-- Game Container -->
     <div class="container">
+        <button class="back-btn" id="backFromGame">← Back</button>
         <div class="header">
             <div class="score-box player1">
                 <div class="player-name" id="myNameDisplay">You</div>
@@ -753,7 +800,10 @@
     <div class="overlay hidden" id="gameOverlay">
         <div class="overlay-title" id="overlayTitle">Game Over</div>
         <div class="overlay-subtitle" id="overlaySubtitle"></div>
-        <button class="btn primary" id="playAgainBtn">Play Again</button>
+        <div class="btn-group">
+            <button class="btn secondary" id="goBackBtn">Go Back</button>
+            <button class="btn primary" id="playAgainBtn">Play Again</button>
+        </div>
     </div>
 
     <div class="controls-hint" id="controlsHint">Arrow Keys to Move</div>
@@ -969,8 +1019,6 @@
             document.querySelectorAll('.control-option').forEach(opt => {
                 opt.classList.toggle('selected', opt.dataset.control === myProfile.controls);
             });
-            
-            updateProfilePreview();
         }
 
         function updateProfilePreview() {
@@ -1683,6 +1731,66 @@
             }
         });
 
+        document.getElementById('backFromGame').addEventListener('click', () => {
+            // Stop the game
+            gameRunning = false;
+            if (gameLoop) {
+                clearInterval(gameLoop);
+                gameLoop = null;
+            }
+            
+            // Close connections
+            if (conn) {
+                conn.close();
+                conn = null;
+            }
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
+            
+            // Reset game state
+            isHost = false;
+            isSolo = false;
+            
+            // Hide game overlay if visible
+            gameOverlay.classList.add('hidden');
+            
+            // Show connection panel and initial view
+            connectionPanel.classList.remove('hidden');
+            showView('initial');
+        });
+
+        document.getElementById('goBackBtn').addEventListener('click', () => {
+            // Stop the game
+            gameRunning = false;
+            if (gameLoop) {
+                clearInterval(gameLoop);
+                gameLoop = null;
+            }
+            
+            // Close connections
+            if (conn) {
+                conn.close();
+                conn = null;
+            }
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
+            
+            // Reset game state
+            isHost = false;
+            isSolo = false;
+            
+            // Hide game overlay
+            gameOverlay.classList.add('hidden');
+            
+            // Show connection panel and initial view
+            connectionPanel.classList.remove('hidden');
+            showView('initial');
+        });
+
         document.getElementById('playAgainBtn').addEventListener('click', () => {
             if (isSolo) {
                 gameOverlay.classList.add('hidden');
@@ -1725,7 +1833,6 @@
                 document.querySelectorAll('.control-option').forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
                 myProfile.controls = option.dataset.control;
-                updateProfilePreview();
             });
         });
 
@@ -1736,14 +1843,12 @@
                 document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
                 colorOption.classList.add('selected');
                 myProfile.color = colorOption.dataset.color;
-                updateProfilePreview();
             }
         });
 
         // Name input live preview
         nameInput.addEventListener('input', () => {
             myProfile.name = nameInput.value.trim() || 'Snake';
-            updateProfilePreview();
         });
 
         // ═══════════════════════════════════════════════════════════════
