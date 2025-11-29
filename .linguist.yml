@@ -1,0 +1,4 @@
+# Override GitHub language detection
+# Force JavaScript as the primary language
+linguist-detectable:
+  - index.html
